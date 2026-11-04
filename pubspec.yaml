@@ -2,6 +2,11 @@ name: feedpulse
 description: "Feedpulse Flutter SDK. Headless widget picker that returns a target (id, path, rect, label) to attach to a bug report."
 version: 0.0.1
 repository: https://github.com/lv-kit/feedpulse-flutter
+issue_tracker: https://github.com/lv-kit/feedpulse-flutter/issues
+topics:
+  - feedback
+  - bug-report
+  - widget-inspector
 
 environment:
   sdk: ^3.13.4
