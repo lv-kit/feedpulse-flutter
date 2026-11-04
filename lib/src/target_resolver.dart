@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
@@ -69,14 +71,29 @@ FeedpulseTargetData? resolveTargetAt({
     }
   }
 
+  final maxPath = math.min(limits.maxPath, FeedpulseTargetLimits.serverMaxPath);
+  final id = explicit is RenderFeedpulseTarget
+      ? sanitizeTargetString(
+          explicit.id,
+          math.min(limits.maxId, FeedpulseTargetLimits.serverMaxId),
+        )
+      : null;
+  final path = _buildPath(chosenElement, maxPath);
+  // サーバーは id も path も無い target を捨てる。
+  if (id == null && path == null) return null;
+
   return FeedpulseTargetData(
-    screen: sanitizeTargetString(screen, limits.maxScreen),
-    id: explicit is RenderFeedpulseTarget
-        ? sanitizeTargetString(explicit.id, limits.maxId)
-        : null,
-    path: _buildPath(chosenElement, limits.maxPath),
+    screen: sanitizeTargetString(
+      screen,
+      math.min(limits.maxScreen, FeedpulseTargetLimits.serverMaxScreen),
+    ),
+    id: id,
+    path: path,
     rect: _rectOf(chosen),
-    label: sanitizeTargetString(label, limits.maxLabel),
+    label: sanitizeTargetString(
+      label,
+      math.min(limits.maxLabel, FeedpulseTargetLimits.serverMaxLabel),
+    ),
   );
 }
 
@@ -119,7 +136,16 @@ FeedpulseRect? _rectOf(RenderObject ro) {
     w: _round(ro.size.width),
     h: _round(ro.size.height),
   );
-  return rect.isFinite ? rect : null;
+  // サーバーは |値| > 1,000,000、w/h < 0、非有限の rect を含む target ごと捨てる。
+  const m = FeedpulseTargetLimits.serverMaxRectAbs;
+  final ok = rect.isFinite &&
+      rect.x.abs() <= m &&
+      rect.y.abs() <= m &&
+      rect.w.abs() <= m &&
+      rect.h.abs() <= m &&
+      rect.w >= 0 &&
+      rect.h >= 0;
+  return ok ? rect : null;
 }
 
 double _round(double v) => v.isFinite ? (v * 100).roundToDouble() / 100 : v;
@@ -212,8 +238,10 @@ String? _buildPath(Element chosen, int max) {
   final parts = [...names.reversed, _typeName(chosen.widget)];
   var path = parts.join(' > ');
   // 長すぎるときは根側を捨てる（葉に近い方が情報量が多い）。
-  if (path.runes.length > max) {
-    path = String.fromCharCodes(path.runes.skip(path.runes.length - max));
+  if (path.length > max) {
+    path = path.substring(path.length - max);
+    final first = path.codeUnitAt(0);
+    if (first >= 0xDC00 && first <= 0xDFFF) path = path.substring(1);
   }
   return sanitizeTargetString(path, max);
 }

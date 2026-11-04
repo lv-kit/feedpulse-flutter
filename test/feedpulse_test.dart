@@ -281,10 +281,53 @@ void main() {
     expect((await second)!.id, 'a');
   });
 
+  group('サーバー上限（#106）', () {
+    test('既定の上限は web TARGET_LIMITS と同じ', () {
+      const l = FeedpulseTargetLimits();
+      expect(l.maxScreen, 512);
+      expect(l.maxId, 200);
+      expect(l.maxPath, 512);
+      expect(FeedpulseTargetLimits.serverMaxLabel, 200);
+      expect(FeedpulseTargetLimits.serverMaxRectAbs, 1000000);
+    });
+
+    testWidgets('上限を超える設定でもサーバー上限に収める', (tester) async {
+      picker = FeedpulseTargetPicker(
+        limits: const FeedpulseTargetLimits(
+          maxLabel: 1000,
+          maxId: 1000,
+          maxPath: 1000,
+          maxScreen: 1000,
+        ),
+        screen: 's' * 600,
+      );
+      await tester.pumpWidget(MaterialApp(
+        home: _Harness(children: [
+          FeedpulseTarget(id: 'i' * 300, child: Text('l' * 300)),
+        ]),
+      ));
+      await startPick(tester);
+      await tester.tap(find.byType(Text).first);
+      await tester.pump();
+      final t = picked!;
+      expect(t.id!.length, 200);
+      expect(t.label!.length, 200);
+      expect(t.screen!.length, 512);
+      expect(t.path!.length, lessThanOrEqualTo(512));
+      expect(t.platform, 'flutter');
+    });
+
+    test('UTF-16 長で切る（サロゲートペアを割らない）', () {
+      final out = sanitizeTargetString('😀' * 5, 5)!;
+      expect(out.length, 4);
+      expect(out, '😀😀');
+    });
+  });
+
   group('sanitizeTargetString', () {
     test('制御文字を除き空白を畳み rune 単位で切る', () {
       expect(sanitizeTargetString('a\u0000b\n\tc', 10), 'a b c');
-      expect(sanitizeTargetString('😀😀😀😀', 2), '😀😀');
+      expect(sanitizeTargetString('😀😀😀😀', 4), '😀😀');
       expect(sanitizeTargetString('   ', 5), isNull);
       expect(sanitizeTargetString(null, 5), isNull);
     });
