@@ -1,0 +1,16 @@
+name: feedpulse_example
+description: Sample app for the Feedpulse target picker.
+publish_to: none
+version: 0.0.1
+
+environment:
+  sdk: ^3.13.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+  feedpulse:
+    path: ../
+
+dev_dependencies:
+  flutter_lints: ^6.0.0
