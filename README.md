@@ -5,6 +5,8 @@ Feedpulse の Flutter SDK。現状は「該当箇所ピッカー」のみ（ヘ�
 
 ## 導入
 
+> **利用には Feedpulse への登録が必要。** SDK を使う前に <https://feedpulse.stargazy.xyz/> でアカウントを登録し、プロジェクトを作成して公開鍵（`pk_`）を発行する。
+
 要件: Dart `^3.13.4` / Flutter `>=3.22.0`。現時点では pub.dev に未公開なので、Git から取得する。
 
 `pubspec.yaml` に追加する。
