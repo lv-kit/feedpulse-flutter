@@ -57,7 +57,7 @@ class FeedpulsePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
                     result.error("play_integrity_failed", e.message, null)
                 }
             }
-            "resetAttestation" -> result.success(null)
+            "commitAttestation", "resetAttestation" -> result.success(null)
             "storeRead" -> result.success(prefs().getString(call.argument<String>("key"), null))
             "storeWrite" -> {
                 prefs().edit().putString(call.argument<String>("key"), call.argument<String>("value")).apply()

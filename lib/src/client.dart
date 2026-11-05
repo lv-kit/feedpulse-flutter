@@ -381,6 +381,7 @@ class FeedpulseClient {
       );
     }
     _session = _Session(jwt, exp.toInt());
+    await _attestor.commit();
     return jwt;
   }
 
@@ -448,6 +449,12 @@ class FeedpulseClient {
       throw FeedpulseException(
         FeedpulseErrorCode.network,
         message: '通信がタイムアウト',
+        cause: e,
+      );
+    } on FormatException catch (e) {
+      throw FeedpulseException(
+        FeedpulseErrorCode.unexpectedResponse,
+        message: '応答を UTF-8 として読めない',
         cause: e,
       );
     }

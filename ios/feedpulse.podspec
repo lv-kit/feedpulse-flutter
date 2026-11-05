@@ -8,6 +8,7 @@ Pod::Spec.new do |s|
   s.author           = { 'lv-kit' => 'https://github.com/lv-kit' }
   s.source           = { :path => '.' }
   s.source_files     = 'Classes/**/*'
+  s.resource_bundles = { 'feedpulse_privacy' => ['Resources/PrivacyInfo.xcprivacy'] }
   s.dependency 'Flutter'
   s.platform         = :ios, '14.0'
   s.frameworks       = 'DeviceCheck', 'CryptoKit'

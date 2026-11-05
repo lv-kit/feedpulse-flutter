@@ -33,6 +33,10 @@ abstract interface class AppAttestor {
   /// 失敗は [FeedpulseException]（[FeedpulseErrorCode.attestationUnavailable]）。
   Future<Map<String, Object?>> attest(String challenge);
 
+  /// `POST /v1/native/session` が成功したときに呼ばれる。iOS はここで端末鍵 ID を確定保存する
+  /// （サーバー未登録の鍵を残さないため）。
+  Future<void> commit();
+
   /// 保存している証明用の状態（iOS の端末鍵 ID）を捨てる。
   /// サーバーが `attestation_failed` を返したときに呼ばれる。
   Future<void> reset();
@@ -82,6 +86,15 @@ class NativeAppAttestor implements AppAttestor {
   }
 
   @override
+  Future<void> commit() async {
+    try {
+      await channel.invokeMethod<void>('commitAttestation');
+    } on PlatformException {
+      // 確定できなくても次回は鍵を作り直すだけ。
+    }
+  }
+
+  @override
   Future<void> reset() async {
     try {
       await channel.invokeMethod<void>('resetAttestation');
@@ -124,6 +137,9 @@ class DevInsecureAttestor implements AppAttestor {
   Future<Map<String, Object?>> attest(String challenge) async => {
     'type': 'dev_insecure',
   };
+
+  @override
+  Future<void> commit() async {}
 
   @override
   Future<void> reset() async {}

@@ -50,6 +50,7 @@ class FakeAttestor implements AppAttestor {
   Map<String, Object?> attestation;
   int attests = 0;
   int resets = 0;
+  int commits = 0;
   final List<String> challenges = [];
 
   @override
@@ -66,6 +67,9 @@ class FakeAttestor implements AppAttestor {
     challenges.add(challenge);
     return attestation;
   }
+
+  @override
+  Future<void> commit() async => commits++;
 
   @override
   Future<void> reset() async => resets++;
@@ -179,6 +183,7 @@ void main() {
         final se = h.server.to(sessionRoute).single;
         expectBodyMatches(req('session-ok-play-integrity')['body'], se.json);
         expect(h.attestor.challenges.single, se.json['challenge']);
+        expect(h.attestor.commits, 1);
 
         final cfg = h.server.to(configRoute).single.request;
         expect(
@@ -289,6 +294,7 @@ void main() {
       );
       expect(h.attestor.attests, 1);
       expect(h.attestor.resets, 1);
+      expect(h.attestor.commits, 0);
     });
 
     test(
