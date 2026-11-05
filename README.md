@@ -3,6 +3,30 @@
 Feedpulse の Flutter SDK。現状は「該当箇所ピッカー」のみ（ヘッドレス。UI・スクリーンショットは含まない）。
 結果は `context.auto.target` に載せる `target` として返る。
 
+## 導入
+
+要件: Dart `^3.13.4` / Flutter `>=3.22.0`。現時点では pub.dev に未公開なので、Git から取得する。
+
+`pubspec.yaml` に追加する。
+
+```yaml
+dependencies:
+  feedpulse:
+    git:
+      url: https://github.com/lv-kit/feedpulse-flutter.git
+      ref: main   # 再現性のため、タグを打った後はタグ名（例: v0.0.1）に固定する
+```
+
+```bash
+flutter pub get
+```
+
+pub.dev に公開した後は `flutter pub add feedpulse` で入れられる（公開手順は `RELEASING.md`）。プラットフォーム固有の設定（Podfile、Gradle、権限）は不要で、Dart だけで動く。
+
+```dart
+import 'package:feedpulse/feedpulse.dart';
+```
+
 ## 使い方
 
 ```dart
