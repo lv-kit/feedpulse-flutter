@@ -111,9 +111,17 @@ class FeedpulseClient {
     return _config;
   }
 
+  /// 保存値の読み込みは一度だけ行う。ただし読み込み自体が失敗したときは
+  /// Future を捨て、次の呼び出しで再試行する（キャッシュの一時障害で止まらない）。
   Future<void> _ensureCacheLoaded() => _cacheLoad ??= () async {
     if (_config != null) return;
-    final text = await _store.read(_cacheKey);
+    final String? text;
+    try {
+      text = await _store.read(_cacheKey);
+    } catch (_) {
+      _cacheLoad = null;
+      return;
+    }
     if (text == null) return;
     try {
       final o = jsonDecode(text) as Map<String, Object?>;
@@ -159,13 +167,17 @@ class FeedpulseClient {
       final fresh = FeedpulseConfig(forms: forms, fetchedAt: _now());
       _config = fresh;
       _lastError = null;
-      await _store.write(
-        _cacheKey,
-        jsonEncode({
-          'fetchedAt': fresh.fetchedAt.millisecondsSinceEpoch,
-          'forms': [for (final f in forms) f.toJson()],
-        }),
-      );
+      try {
+        await _store.write(
+          _cacheKey,
+          jsonEncode({
+            'fetchedAt': fresh.fetchedAt.millisecondsSinceEpoch,
+            'forms': [for (final f in forms) f.toJson()],
+          }),
+        );
+      } catch (_) {
+        // 保存に失敗しても取得済みの config は返す（キャッシュなので無くても動く）。
+      }
       return fresh;
     } on FeedpulseException catch (e) {
       _lastError = e;
