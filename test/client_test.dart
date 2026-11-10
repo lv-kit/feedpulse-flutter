@@ -169,6 +169,7 @@ make({
 }
 
 void main() {
+  cacheRecoveryTests();
   group('contract: session', () {
     test(
       'android: challenge → play_integrity → session、リクエストが fixture に適合',
@@ -861,6 +862,68 @@ void main() {
         isEmpty,
       );
       expect(validateFields(form, {}), {'t': FieldErrorCode.required});
+    });
+  });
+}
+
+/// 読み書きを失敗させられるストア（キャッシュの一時障害の再現用）。
+class FlakyConfigStore extends MemoryConfigStore {
+  int failReads = 0;
+  int failWrites = 0;
+
+  @override
+  Future<String?> read(String key) async {
+    if (failReads > 0) {
+      failReads--;
+      throw StateError('read failed');
+    }
+    return super.read(key);
+  }
+
+  @override
+  Future<void> write(String key, String value) async {
+    if (failWrites > 0) {
+      failWrites--;
+      throw StateError('write failed');
+    }
+    return super.write(key, value);
+  }
+}
+
+void cacheRecoveryTests() {
+  group('cache: 保存値の読み書き失敗から復旧する', () {
+    test('最初の read だけ失敗しても、2回目の refreshConfig が成功する', () async {
+      final store = FlakyConfigStore()..failReads = 1;
+      final h = make(store: store);
+      final first = await h.client.refreshConfig();
+      expect(first.form('bug'), isNotNull);
+      final second = await h.client.refreshConfig();
+      expect(second.form('bug'), isNotNull);
+    });
+
+    test('read が一度失敗しても、次の loadCachedConfig で保存値を読める', () async {
+      final seed = make();
+      await seed.client.refreshConfig();
+      final store = FlakyConfigStore()..failReads = 1;
+      final h = make(store: store, server: FakeServer());
+      await store.write(
+        'config|https://ingest.example.test|pk_example',
+        (await seed.store.read(
+          'config|https://ingest.example.test|pk_example',
+        ))!,
+      );
+      expect(await h.client.loadCachedConfig(), isNull);
+      final cached = await h.client.loadCachedConfig();
+      expect(cached?.isStale, isTrue);
+      expect(cached?.form('bug'), isNotNull);
+    });
+
+    test('write が失敗しても refreshConfig は取得した config を返す', () async {
+      final store = FlakyConfigStore()..failWrites = 1;
+      final h = make(store: store);
+      final cfg = await h.client.refreshConfig();
+      expect(cfg.form('bug'), isNotNull);
+      expect(h.client.lastError, isNull);
     });
   });
 }
