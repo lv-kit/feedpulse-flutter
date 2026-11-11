@@ -51,16 +51,27 @@ FieldErrorCode? _check(FeedpulseBlock b, Object v) {
       return null;
     case 'email':
       if (v is! String) return FieldErrorCode.type;
-      if (b.maxLength != null && v.length > b.maxLength!) {
+      final text = v.replaceAll(RegExp(r'[\x00-\x1f\x7f]'), '').trim();
+      if (b.maxLength != null && text.length > b.maxLength!) {
         return FieldErrorCode.tooLong;
       }
-      return _email.hasMatch(v) ? null : FieldErrorCode.invalidEmail;
+      return text.length <= 254 && _email.hasMatch(text)
+          ? null
+          : FieldErrorCode.invalidEmail;
     case 'number':
-    case 'rating':
       if (!_finite(v)) return FieldErrorCode.type;
       final n = v as num;
       if (b.min != null && n < b.min!) return FieldErrorCode.outOfRange;
       if (b.max != null && n > b.max!) return FieldErrorCode.outOfRange;
+      return null;
+    case 'rating':
+      if (!_finite(v) || (v as num).truncateToDouble() != v) {
+        return FieldErrorCode.type;
+      }
+      final n = v;
+      if (n < 1 || (b.min != null && n < b.min!) || (b.max != null && n > b.max!)) {
+        return FieldErrorCode.outOfRange;
+      }
       return null;
     case 'select':
     case 'radio':

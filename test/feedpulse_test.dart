@@ -285,7 +285,7 @@ void main() {
     test('既定の上限は web TARGET_LIMITS と同じ', () {
       const l = FeedpulseTargetLimits();
       expect(l.maxScreen, 512);
-      expect(l.maxId, 200);
+      expect(l.maxId, 128);
       expect(l.maxPath, 512);
       expect(FeedpulseTargetLimits.serverMaxLabel, 200);
       expect(FeedpulseTargetLimits.serverMaxRectAbs, 1000000);
@@ -310,7 +310,7 @@ void main() {
       await tester.tap(find.byType(Text).first);
       await tester.pump();
       final t = picked!;
-      expect(t.id!.length, 200);
+      expect(t.id!.length, 128);
       expect(t.label!.length, 200);
       expect(t.screen!.length, 512);
       expect(t.path!.length, lessThanOrEqualTo(512));
@@ -334,6 +334,14 @@ void main() {
   });
 
   group('FeedpulseTargetData.toJson', () {
+    test('直接指定された ID もサーバー上限に収める', () {
+      final target = FeedpulseTargetData(id: '${'a' * 127}😀', label: 'label');
+      final json = target.toJson();
+      expect(json['id'], 'a' * 127);
+      expect(json['label'], 'label');
+      expect(FeedpulseTargetData(id: '  a  b\nc  ').toJson()['id'], 'a  bc');
+      expect(FeedpulseTargetData(id: '${'a' * 126}😀').toJson()['id'], '${'a' * 126}😀');
+    });
     test('null を含めず rect は x/y/w/h', () {
       const t = FeedpulseTargetData(
         id: 'a',

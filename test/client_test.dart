@@ -246,6 +246,29 @@ void main() {
       expect(h.server.to(challengeRoute), hasLength(2));
     });
 
+    test('端末時計が進んでいてもサーバー時刻で期限を判定する', () async {
+      final base = fxResponse('session-ok-play-integrity');
+      final server = happyServer()
+        ..routes[sessionRoute] = [
+          FeedpulseResponse(base.status, {
+            'date': HttpDate.format(
+              DateTime.fromMillisecondsSinceEpoch(
+                1700000000 * 1000,
+                isUtc: true,
+              ),
+            ),
+          }, base.body),
+        ];
+      final h = make(server: server);
+      h.advance(const Duration(days: 1));
+      await h.client.refreshConfig();
+      await h.client.refreshConfig();
+      expect(h.server.to(sessionRoute), hasLength(1));
+      h.advance(const Duration(seconds: 840));
+      await h.client.refreshConfig();
+      expect(h.server.to(sessionRoute), hasLength(2));
+    });
+
     test('同時呼び出しでも session は 1 回だけ取る', () async {
       final h = make();
       await Future.wait([h.client.refreshConfig(), h.client.refreshConfig()]);
@@ -807,6 +830,14 @@ void main() {
           max: 5,
         ),
         FeedpulseBlock(
+          id: 'r',
+          type: 'rating',
+          label: 'r',
+          required: false,
+          min: 2,
+          max: 5,
+        ),
+        FeedpulseBlock(
           id: 'c',
           type: 'checkbox',
           label: 'c',
@@ -830,6 +861,23 @@ void main() {
       expect(validateFields(form, {'t': 'ab', 'e': 'x'}), {
         'e': FieldErrorCode.invalidEmail,
       });
+      expect(validateFields(form, {'t': 'ab', 'e': 'user@example-long.com'}), {
+        'e': FieldErrorCode.tooLong,
+      });
+      expect(
+        validateFields(form, {'t': 'ab', 'e': ' user@example.com '}),
+        isEmpty,
+      );
+      expect(validateFields(form, {'t': 'ab', 'r': 2.5}), {
+        'r': FieldErrorCode.type,
+      });
+      expect(validateFields(form, {'t': 'ab', 'r': 0}), {
+        'r': FieldErrorCode.outOfRange,
+      });
+      expect(validateFields(form, {'t': 'ab', 'r': 1}), {
+        'r': FieldErrorCode.outOfRange,
+      });
+      expect(validateFields(form, {'t': 'ab', 'r': 5}), isEmpty);
       expect(validateFields(form, {'t': 'ab', 'n': 9}), {
         'n': FieldErrorCode.outOfRange,
       });

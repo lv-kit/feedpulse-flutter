@@ -83,6 +83,7 @@ class FeedpulseClient {
   final String _base;
 
   _Session? _session;
+  Duration _clockOffset = Duration.zero;
   Future<String>? _sessionInFlight;
   AppEnvironment? _env;
   String? _identityToken;
@@ -311,7 +312,7 @@ class FeedpulseClient {
     final cur = _session;
     if (!forceNew &&
         cur != null &&
-        _now().millisecondsSinceEpoch ~/ 1000 <
+        _now().add(_clockOffset).millisecondsSinceEpoch ~/ 1000 <
             cur.expiresAtSeconds - _sessionRefreshMarginSeconds) {
       return Future.value(cur.token);
     }
@@ -391,6 +392,17 @@ class FeedpulseClient {
         message: 'session の応答が不正',
         httpStatus: res.status,
       );
+    }
+    final date = res.headers['date'];
+    if (date != null) {
+      try {
+        _clockOffset = HttpDate.parse(date).difference(_now());
+      } on FormatException {
+        // Date が不正なら端末時刻を使う。
+        _clockOffset = Duration.zero;
+      }
+    } else {
+      _clockOffset = Duration.zero;
     }
     _session = _Session(jwt, exp.toInt());
     await _attestor.commit();
