@@ -1,5 +1,5 @@
 /// `target` の上限。web `TARGET_LIMITS`（#106）に合わせる:
-/// screen 512 / id 200 / path 512 / label 200（UTF-16 長）、rect は絶対値 1,000,000 以下。
+/// screen 512 / id 128 / path 512 / label 200（UTF-16 長）、rect は絶対値 1,000,000 以下。
 /// サーバーは超過時に切り詰めず target ごと捨てるため、SDK 側で上限内に収める。
 class FeedpulseTargetLimits {
   const FeedpulseTargetLimits({
@@ -10,7 +10,7 @@ class FeedpulseTargetLimits {
   });
 
   static const int serverMaxScreen = 512;
-  static const int serverMaxId = 200;
+  static const int serverMaxId = 128;
   static const int serverMaxPath = 512;
   static const int serverMaxLabel = 200;
   static const double serverMaxRectAbs = 1000000;
@@ -24,6 +24,23 @@ class FeedpulseTargetLimits {
 
 final RegExp _controlChars = RegExp(r'[\u0000-\u001F\u007F-\u009F  ]');
 final RegExp _spaces = RegExp(r'\s+');
+
+/// サーバーの ID 正規化に合わせ、内部の空白は変えず UTF-16 長を制限する。
+String? sanitizeTargetId(String? input) {
+  if (input == null) return null;
+  final cleaned = input.replaceAll(RegExp(r'[\x00-\x1f\x7f]'), '').trim();
+  if (cleaned.isEmpty) return null;
+  if (cleaned.length <= FeedpulseTargetLimits.serverMaxId) return cleaned;
+  final out = StringBuffer();
+  var length = 0;
+  for (final rune in cleaned.runes) {
+    final units = rune > 0xffff ? 2 : 1;
+    if (length + units > FeedpulseTargetLimits.serverMaxId) break;
+    out.writeCharCode(rune);
+    length += units;
+  }
+  return out.toString().trimRight();
+}
 
 /// 制御文字を空白に置き、空白を畳み、UTF-16 長 [max] 以内に切る（rune 単位で切る）。空なら null。
 String? sanitizeTargetString(String? input, int max) {

@@ -1,3 +1,5 @@
+import 'sanitize.dart';
+
 /// 画面上の該当箇所（`context.auto.target`）。
 ///
 /// feedpulse-web の `target` スキーマ（#106）に合わせた形:
@@ -30,14 +32,18 @@ class FeedpulseTargetData {
   final String? label;
 
   /// `context.auto.target` にそのまま載せられる JSON。null の項目は含めない。
-  Map<String, Object?> toJson() => <String, Object?>{
-        'platform': platform,
-        if (screen != null) 'screen': screen,
-        if (id != null) 'id': id,
-        if (path != null) 'path': path,
-        if (rect != null) 'rect': rect!.toJson(),
-        if (label != null) 'label': label,
-      };
+  Map<String, Object?> toJson() {
+    final sanitizedId = sanitizeTargetId(id);
+    final result = <String, Object?>{
+    'platform': platform,
+    if (screen != null) 'screen': screen,
+    if (path != null) 'path': path,
+    if (rect != null) 'rect': rect!.toJson(),
+    if (label != null) 'label': label,
+    };
+    if (sanitizedId != null) result['id'] = sanitizedId;
+    return result;
+  }
 
   @override
   String toString() => 'FeedpulseTargetData(${toJson()})';
@@ -59,8 +65,12 @@ class FeedpulseRect {
 
   bool get isFinite => x.isFinite && y.isFinite && w.isFinite && h.isFinite;
 
-  Map<String, Object?> toJson() =>
-      <String, Object?>{'x': x, 'y': y, 'w': w, 'h': h};
+  Map<String, Object?> toJson() => <String, Object?>{
+    'x': x,
+    'y': y,
+    'w': w,
+    'h': h,
+  };
 
   @override
   bool operator ==(Object other) =>
