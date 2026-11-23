@@ -14,7 +14,7 @@ FeedPulse（Cloudflare Workers 上のフィードバック収集・配信 SaaS�
 
 ## 検証
 
-CI（`.github/workflows/ci.yml`）と同じ。
+次のコマンドをローカルで実行する。デプロイ作業以外の検証用CI（GitHub Actions 等）は作らない。PR 作成前に `flutter analyze`、`flutter test`、`dart pub publish --dry-run` をローカルで実行し、すべて成功させる。実行できない場合や失敗した場合は PR を作成しない。CI を追加してよいのはデプロイ作業だけ。Branch protection に必須の `CI` ステータスチェックが設定されている場合は外す。
 
 ```sh
 flutter pub get
@@ -23,7 +23,7 @@ flutter test
 dart pub publish --dry-run
 ```
 
-`--dry-run` は警告 0 が条件。CI が見るのは Dart のみなので、`ios/`・`android/` を変えたときは実機・実アプリで確認し、確認できなかったことは PR に書く。
+`--dry-run` は警告 0 が条件。上記が見るのは Dart のみなので、`ios/`・`android/` を変えたときは実機・実アプリで確認し、確認できなかったことは PR に書く。
 
 ## API 契約
 
