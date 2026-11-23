@@ -108,7 +108,7 @@ final json = target?.toJson();
 
 ## 検証範囲
 
-契約 fixture を使った単体テスト（HTTP とアプリ証明を差し替え）、`flutter analyze`、`dart pub publish --dry-run` は CI で確認している。**実機の App Attest / Play Integrity の動作は未検証**（ネイティブ実装は書いたが、実機・実サーバーでの疎通は手作業で確認が必要）。
+契約 fixture を使った単体テスト（HTTP とアプリ証明を差し替え）、`flutter analyze`、`dart pub publish --dry-run` はリリース前にローカルで確認している（検証用CIは置かない）。**実機の App Attest / Play Integrity の動作は未検証**（ネイティブ実装は書いたが、実機・実サーバーでの疎通は手作業で確認が必要）。
 
 ## 開発
 
