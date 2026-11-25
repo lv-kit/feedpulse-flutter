@@ -65,11 +65,7 @@ class NativeAppAttestor implements AppAttestor {
     } on PlatformException catch (e) {
       throw _unavailable(e);
     } on MissingPluginException catch (e) {
-      throw FeedpulseException(
-        FeedpulseErrorCode.attestationUnavailable,
-        message: 'この環境はネイティブ実装が無い（iOS / Android のみ対応）: ${e.message}',
-        cause: e,
-      );
+      throw _noNative(e);
     }
   }
 
@@ -82,6 +78,8 @@ class NativeAppAttestor implements AppAttestor {
       return m!;
     } on PlatformException catch (e) {
       throw _unavailable(e);
+    } on MissingPluginException catch (e) {
+      throw _noNative(e);
     }
   }
 
@@ -91,6 +89,8 @@ class NativeAppAttestor implements AppAttestor {
       await channel.invokeMethod<void>('commitAttestation');
     } on PlatformException {
       // 確定できなくても次回は鍵を作り直すだけ。
+    } on MissingPluginException {
+      // ネイティブ実装が無い環境では確定する状態が無い。
     }
   }
 
@@ -100,8 +100,16 @@ class NativeAppAttestor implements AppAttestor {
       await channel.invokeMethod<void>('resetAttestation');
     } on PlatformException {
       // 掃除に失敗しても次回の証明で再度試す。
+    } on MissingPluginException {
+      // ネイティブ実装が無い環境では捨てる状態が無い。
     }
   }
+
+  FeedpulseException _noNative(MissingPluginException e) => FeedpulseException(
+    FeedpulseErrorCode.attestationUnavailable,
+    message: 'この環境はネイティブ実装が無い（iOS / Android のみ対応）: ${e.message}',
+    cause: e,
+  );
 
   FeedpulseException _unavailable(PlatformException e) => FeedpulseException(
     FeedpulseErrorCode.attestationUnavailable,

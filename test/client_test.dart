@@ -803,6 +803,35 @@ void main() {
         throwsA(isA<FeedpulseException>()),
       );
     });
+
+    test('プラグイン未登録でも attest は attestationUnavailable', () async {
+      await expectLater(
+        NativeAppAttestor().attest('c'),
+        throwsA(
+          isA<FeedpulseException>().having(
+            (e) => e.code,
+            'code',
+            FeedpulseErrorCode.attestationUnavailable,
+          ),
+        ),
+      );
+    });
+
+    test('プラグイン未登録でも commit / reset は例外を投げない', () async {
+      final a = NativeAppAttestor();
+      await a.commit();
+      await a.reset();
+    });
+
+    test('commit / reset の PlatformException は握りつぶす', () async {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(ch, (c) async {
+            throw PlatformException(code: 'boom');
+          });
+      final a = NativeAppAttestor();
+      await a.commit();
+      await a.reset();
+    });
   });
 
   group('validateFields', () {
