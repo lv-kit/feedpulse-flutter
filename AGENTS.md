@@ -23,7 +23,7 @@ flutter test
 dart pub publish --dry-run
 ```
 
-`--dry-run` は警告 0 が条件。上記が見るのは Dart のみなので、`ios/`・`android/` を変えたときは実機・実アプリで確認し、確認できなかったことは PR に書く。
+`--dry-run` は警告 0 が条件。`dart format` は変更したファイルだけに実行する（`lib`・`test` 全体に掛けると無関係なファイルまで整形される）。上記が見るのは Dart のみなので、`ios/`・`android/` を変えたときは実機・実アプリで確認し、確認できなかったことは PR に書く。
 
 ## API 契約
 
