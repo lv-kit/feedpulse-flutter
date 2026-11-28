@@ -2,7 +2,7 @@ import 'sanitize.dart';
 
 /// 画面上の該当箇所（`context.auto.target`）。
 ///
-/// feedpulse-web の `target` スキーマ（#106）に合わせた形:
+/// feedpulse-web の `target` スキーマに合わせた形:
 /// `platform` / `screen` / `id` / `path` / `rect` / `label`。
 class FeedpulseTargetData {
   const FeedpulseTargetData({

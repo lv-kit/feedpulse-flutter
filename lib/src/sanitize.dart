@@ -1,4 +1,4 @@
-/// `target` の上限。web `TARGET_LIMITS`（#106）に合わせる:
+/// `target` の上限。web `TARGET_LIMITS` に合わせる:
 /// screen 512 / id 128 / path 512 / label 200（UTF-16 長）、rect は絶対値 1,000,000 以下。
 /// サーバーは超過時に切り詰めず target ごと捨てるため、SDK 側で上限内に収める。
 class FeedpulseTargetLimits {
